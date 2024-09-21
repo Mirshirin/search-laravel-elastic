@@ -1,0 +1,8 @@
+*.sqlite*
+/bootstrap/cache
+/storage
+/public/storage
+/vendor
+/node_modules
+.env
+.env.local
