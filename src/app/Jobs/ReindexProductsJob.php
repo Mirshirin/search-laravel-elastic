@@ -10,7 +10,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
 
-class ReindexProducts implements ShouldQueue
+class ReindexProductsJob implements ShouldQueue
 {
     use Queueable;
     protected $client;

@@ -3,8 +3,8 @@ namespace App\Models;
 
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Elastic\Elasticsearch\ClientBuilder;
-use thiagoalessio\TesseractOCR\TesseractOCR;
 
 class Product extends Model
 {
@@ -27,30 +27,30 @@ class Product extends Model
             $product->deleteFromIndex();
         });
     }
-    public function search(Request $request)
+    public static function createIndex()
     {
-        $query = $request->input('search');
-    
+        $client = ClientBuilder::create()->setHosts([env('ELASTICSEARCH_HOST', 'localhost:9200')])->build();
         $params = [
             'index' => 'products',
-            'body'  => [
-                'query' => [
-                    'multi_match' => [
-                        'query'  => $query,
-                        'fields' => ['name', 'description', 'price','image']
-                    ]
+            'body' => [
+                'mappings' => [
+                    'properties' => [
+                        'name' => ['type' => 'text'],
+                        'description' => ['type' => 'text'],
+                        'price' => ['type' => 'text'],
+                        'image' => ['type' => 'text'], // ذخیره مسیر تصویر
+                        'image_text' => ['type' => 'text'], // ذخیره متن استخراج شده از تصویر 
+                    ],
                 ]
-            ]
+            ],
         ];
 
-        $results = $this->client->search($params);
-        
-        $products = collect($results['hits']['hits'])->map(function ($hit) {
-            return $hit['_source']; 
-        });
-
-        return view('search_results', ['products' => $products, 'query' => $query]);
-    
+        try {
+            $client->indices()->create($params);
+        } catch (\Exception $e) {
+            dd($e);
+            // Handle the exception (e.g., log the error or display a user-friendly message)
+        }
     }
     public function indexToElasticsearch()
     {
@@ -64,6 +64,8 @@ class Product extends Model
                 'description' => $this->description,
                 'price'       => $this->price,
                 'image'       => $this->image,
+                'image_text'  => $this->image_text, // متن استخراج شده از تصویر
+
 
             ]
         ];
@@ -83,13 +85,25 @@ class Product extends Model
         $client->delete($params);
     }
 
-    public function extractImageText($imagePath)
+   
+    public function updateElasticsearchIndex(Request $request)
     {
-        $ocr = new TesseractOCR($imagePath);
-        return $ocr->run();
-    }
-    public function updateElasticsearchIndex()
-    {
-        $this->indexToElasticsearch();
+        $product = new Product();
+        $product->name = $request->name;
+        $product->description = $request->description;
+        $product->price = $request->price;
+        $product->image = $request->file('image')->store('images');
+    
+        // استخراج متن از تصویر
+        $imagePath = Storage::disk('local')->path($product->image);
+        $product->image_text = $this->extractImageText($imagePath);
+    
+        $product->save();
+    
+        // ذخیره محصول در Elasticsearch
+        $this->indexProductInElasticsearch($product);
+    
+        return redirect()->back()->with('success', 'Product created successfully.');
+    
     }
 }
