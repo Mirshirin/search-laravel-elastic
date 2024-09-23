@@ -15,11 +15,14 @@ services:
       - DB_DATABASE=laravel
       - DB_USERNAME=laravel
       - DB_PASSWORD=secret
+    ports:
+      - "5173:5173" 
     depends_on:
       - mysql
       - elasticsearch
     networks:
       - laravel
+
 
 
 

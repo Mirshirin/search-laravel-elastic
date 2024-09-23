@@ -67,7 +67,7 @@ RUN apt-get update && apt-get install -y nodejs npm
 RUN npm install
 
 
-#CMD ["npm", "start"]
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Run the entrypoint file.
-#ENTRYPOINT [ "docker/entrypoint.sh" ]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
