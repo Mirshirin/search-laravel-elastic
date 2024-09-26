@@ -1,13 +1,29 @@
 # Used for prod build.
 FROM php:8.2-fpm 
 
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    unzip \
+    libpq-dev \
+    libcurl4-gnutls-dev \
+    nginx \
+    libonig-dev \
+    curl \
+    nodejs \
+    npm
 
-# Install dependencies.
-RUN apt-get update && apt-get install -y unzip libpq-dev libcurl4-gnutls-dev nginx libonig-dev
+# Install PHP extensions
+RUN docker-php-ext-install \
+    mysqli \
+    pdo \
+    pdo_mysql \
+    bcmath \
+    curl \
+    opcache \
+    mbstring
 
-# Install PHP extensions.
-RUN docker-php-ext-install mysqli pdo pdo_mysql bcmath curl opcache mbstring
-
+# Install Redis PHP extension
+RUN pecl install redis && docker-php-ext-enable redis
 # Copy composer executable.
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -47,16 +63,13 @@ RUN php artisan key:generate
 COPY --chown=www-data:www-data . .
 
 # Create laravel caching folders.
-RUN mkdir -p /var/www/storage/framework
-RUN mkdir -p /var/www/storage/framework/cache
-RUN mkdir -p /var/www/storage/framework/testing
-RUN mkdir -p /var/www/storage/framework/sessions
-RUN mkdir -p /var/www/storage/framework/views
+RUN mkdir -p /var/www/storage/framework/{cache,sessions,testing,views}
+
 
 # Fix files ownership.
 RUN chown -R www-data /var/www/storage
 RUN chown -R www-data /var/www/storage/framework
-RUN chown -R www-data /var/www/storage/framework/sessions
+#RUN chown -R www-data /var/www/storage/framework/sessions
 
 
 # Adjust user permission & group
@@ -65,9 +78,9 @@ RUN groupmod --gid 1001 www-data
 RUN apt-get update && apt-get install -y nodejs npm
 
 RUN npm install
+#RUN docker-php-ext-install redis
 
 
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+# RUN chmod +x /usr/local/bin/entrypoint.sh
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+# ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
