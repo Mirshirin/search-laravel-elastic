@@ -9,6 +9,7 @@
         "elasticsearch/elasticsearch": "^8.15",
         "laravel/framework": "^11.9",
         "laravel/tinker": "^2.9",
+        "predis/predis": "^2.2",
         "thiagoalessio/tesseract_ocr": "^2.13"
     },
     "require-dev": {

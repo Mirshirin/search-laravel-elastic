@@ -140,5 +140,12 @@ return [
         'alias' => env('SESSION_ALIAS', 'session'),
     ],
 
+   'middleware' => [
+    // ...
+    'web' => [
+        // ...
+        \App\Http\Middleware\CheckProductPermission::class,
+    ],
+    ],
 
 ];

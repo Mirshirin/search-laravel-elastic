@@ -1,3 +1,4 @@
+
 @extends('layouts.app')
 @section('content')
 
@@ -14,7 +15,9 @@
               <button class="btn btn-success" type="submit">Search</button>
               </form>
             </div>
-
+            <div>
+          
+            <a href="{{ route('products.create') }}" class="btn btn-danger continue-shopping-btn">Create Product</a>           
             <h2>Search Results</h2>
             <ul id="search-results">
                 <!-- Results will be displayed here -->
@@ -29,6 +32,7 @@
                       <th>Description</th>
                       <th>Price</th>
                       <th>ImageName</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
                   @php
@@ -43,6 +47,10 @@
                       <td>{{ $product['description'] }}</td>
                       <td>{{ $product['price'] }}</td>
                       <td>{{ $product['image'] }}</td>
+                      <td>
+                          <a href="{{ route('products.edit',$product['id']) }}" class="btn btn-sm btn-info">Edit</a>      
+                          <button type="submit" class="btn btn-sm btn-danger deletebtn"  >Delete</button>
+                      </td>
                     </tr>
                     @endforeach
                   </tbody>                 

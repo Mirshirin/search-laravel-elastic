@@ -3,38 +3,39 @@
 namespace App\Jobs;
 
 use App\Models\Product;
+use Illuminate\Bus\Queueable;
+use Illuminate\Support\Facades\Log;
+use App\Services\ElasticsearchService;
 use Illuminate\Queue\SerializesModels;
-use Elastic\Elasticsearch\ClientBuilder;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
 
 
 class ReindexProductsJob implements ShouldQueue
 {
-    use Queueable;
-    protected $client;
+    use Dispatchable, InteractsWithQueue, SerializesModels;
 
-    /**
-     * Create a new job instance.
-     */
-    public function __construct()
+    private $elasticsearchService;
+
+    // public function __construct()
+    // {
+    //     $this->elasticsearchService = app(ElasticsearchService::class);
+    // }
+
+    public function handle()
     {
-        $this->client = app('Elasticsearch');
+        $this->elasticsearchService = app(ElasticsearchService::class);
 
-    }
-
-    /**
-     * Execute the job.
-     */
-    public function handle(): void
-    {
-    
+        Log::info('Starting reindexing');
         $products = Product::all();
 
         foreach ($products as $product) {
-            $product->indexToElasticsearch(); 
+            Log::info('Indexing product: ' . $product->id);
+            Log::info('Indexing product fullllllll: ' . $product);
+            $this->elasticsearchService->indexProduct($product);
         }
-    
+
+        Log::info('Reindexing completed');
     }
 }
