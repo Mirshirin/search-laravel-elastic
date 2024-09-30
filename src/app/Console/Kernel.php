@@ -18,9 +18,12 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         Log::info('Reindex'.now());
-       // $schedule->job(new \App\Jobs\ReindexProductsJob)->hourly();
-       // $schedule->job(new \App\Jobs\ReindexProductsJob)->everyFiveMinutes();
-       $schedule->command('queue:listen')->withoutOverlapping()->everyFiveMinutes();
+        //->hourly()
+       //  $schedule->command('queue:listen')->everyFiveMinutes()->withoutOverlapping(60);
+     
+       $schedule->command('queue:listen')
+                ->everyFiveMinutes()
+                ->withoutOverlapping(10);
 
 
     }

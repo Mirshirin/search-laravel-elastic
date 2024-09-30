@@ -47,7 +47,7 @@ class ProductRepository implements ProductRepositoryInterface
     public function update($id, array $data, $imageFile =null)
     {    
          
-        $product = Product::findOrFail($id);
+        $product = $this->getProductById($id);
         if (!$product) {
             throw new \Exception('Product not found.'); 
         }
@@ -72,7 +72,7 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function destroy($id)
     {
-        $product = Product::find($id);
+        $product = $this->getProductById($id);
         if (!$product) {
             return back()->withErrors(['error' => 'Product not found.']);
         }

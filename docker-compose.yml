@@ -7,7 +7,14 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ./src:/var/www/html
+      - ./src:/var/www/html       
+    ports:
+      - "5173:5173" 
+    depends_on:
+      - mysql
+      - redis
+      - elasticsearch
+    command: sh -c "./docker-entrypoint.sh"
     environment:
       - DB_CONNECTION=mysql
       - DB_HOST=mysql
@@ -19,14 +26,28 @@ services:
       - REDIS_CLIENT=phpredis  
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    ports:
-      - "5173:5173" 
+      - ELASTICSEARCH_HOST=elasticsearch:9200 
+    working_dir: /var/www/html
+    tty: true
+    restart: unless-stopped
+    networks:
+      - laravel  
+        
+  queue:
+    container_name: laravel-queue
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./src:/var/www/html
     depends_on:
-      - mysql
-      - redis
-      - elasticsearch
+      - app
+    command: sh -c "./queue-entrypoint.sh"
+    working_dir: /var/www/html
+    tty: true
     networks:
       - laravel
+
   nginx:
     image: nginx:alpine
     container_name: nginx
@@ -64,8 +85,7 @@ services:
     depends_on:
       - mysql
     networks:
-      - laravel
-      
+      - laravel      
 
   elasticsearch:
     image: elasticsearch:8.8.0
@@ -73,11 +93,14 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
     ports:
       - "9200:9200"
       - "9300:9300"
     networks:
       - laravel
+
   redis:
     image: redis:alpine
     ports:
@@ -89,14 +112,15 @@ services:
     container_name: laravel-npm
     build:
       context: .
-      dockerfile: Dockerfile
-    command: npm run dev
+      dockerfile: Dockerfile    
     volumes:
       - ./src:/var/www/html
     depends_on:
       - app
     networks:
       - laravel
+    command: npm run dev
+
 volumes:
   mysql_data:
 

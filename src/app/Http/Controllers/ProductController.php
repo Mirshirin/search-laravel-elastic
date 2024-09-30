@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Policies\ProductPolicy;
 use App\Jobs\ReindexProductsJob;
 use App\Services\ProductsService;
+use App\Services\ElasticsearchService;
 use Elastic\Elasticsearch\ClientBuilder;
 use App\Http\Requests\StoreProductRequest;
 use thiagoalessio\TesseractOCR\TesseractOCR;
@@ -35,20 +36,25 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $query = $request->input('search');
-        
+         //dd($query)   ; 
+        $page =  $request->input('page',1);
+        $size=10;
+        $from=($page -1 ) * $size;
+        $totalResults = 0;
+        $products = collect(); // مقدار پیش‌فرض برای محصولات
         if (empty($query)) {
             $products = Product::all();
         }else {
             $client = ClientBuilder::create()->setHosts([env('ELASTICSEARCH_HOST', 'localhost:9200')])->build();
-           
-            try {
-                $response = $client->ping();
-                if ($response) {
-                    echo "Connected to Elasticsearch successfully.";
-                }
-            } catch (\Exception $e) {
-                echo "Failed to connect to Elasticsearch: " . $e->getMessage();
-            }
+              
+                    try {
+                        $response = $client->ping();
+                        if ($response) {
+                            echo "Connected to Elasticsearch successfully.";
+                        }
+                    } catch (\Exception $e) {
+                        echo "Failed to connect to Elasticsearch: " . $e->getMessage();
+                    }
             
             $params = [
                 'index' => 'products',
@@ -56,22 +62,34 @@ class ProductController extends Controller
                     'query' => [
                         'multi_match' => [
                             'query'  => $query,
-                            'fields' => ['name', 'description','image', 'image_text','price'] 
-                            ]
-                            ]
+                            'fields' => ['name', 'description','image_text'] 
+                                ]
+                            ],
+                            'size' => $size,
+                            'from' => $from
+
                         ]
                     ];
     
-            $results= $client->search($params);
-                    //     dd($results);
+                    $results = $client->search($params);  
+                   
+              //dd($results)   ;  
             $products = collect($results['hits']['hits'])->map(function ($hit) {
                 return array_merge($hit['_source'], ['id' => $hit['_id']]);
             });
+           
+            $totalResults = $results['hits']['total']['value'];
+           // $totalResults = $results['hits']['total']['value'];
             
-        }      
+        } 
      
-            return view('product.search', ['products' => $products]);
-  
+            return view('product.search', [
+                'products' => $products,
+                'currentPage' => $page,
+                'totalResults' => $totalResults , // مقدار پیش‌فرض برای تعداد نتایج
+                'size' => $size
+            ]);
+       
     }
     public function reindex() {
    
@@ -83,8 +101,7 @@ class ProductController extends Controller
      protected $productsService;
 
      public function create()
-     {
-        
+     {        
          return view('product.create-product');
      }
     public function store(Request $request)
@@ -109,6 +126,53 @@ class ProductController extends Controller
             }       
             $product = app(ProductRepositoryInterface::class)->update($id, $request->all(), $image);    
             return redirect(route('products.index'));
-         }
+    }
+    public function destroy($id)
+    {       
+        try {
+            $product = $this->productRepository->destroy($id);
+    
+            // اگر محصول حذف شد، بازگشت پیام موفقیت
+            if ($product) {
+                return response()->json(['status' => 'Data deleted successfully.']);
+            } else {
+                return response()->json(['status' => 'Product not found.'], 404);
+            }
+        } catch (\Exception $e) {
+            // مدیریت خطاها و بازگرداندن پیام خطا
+            return response()->json(['status' => 'Error deleting data.', 'error' => $e->getMessage()], 500);
+        }   
+    }
+    public function getIndexedProducts()    
+    {
+        $client = ClientBuilder::create()->setHosts([env('ELASTICSEARCH_HOST', 'localhost:9200')])->build();
+
+        $params = [
+            'index' => 'products',
+            'body'  => [
+                'query' => [
+                    'match_all' => (object)[] // همه محصولات ایندکس‌شده را می‌گیرد
+                ],
+                'size' => 1000 // می‌توانید تعداد آیتم‌ها را تنظیم کنید
+            ]
+        ];
+
+        try {
+            $response = $client->search($params);
+
+            // چاپ داده‌های ایندکس‌شده
+            foreach ($response['hits']['hits'] as $hit) {
+                echo "Product ID: " . $hit['_id'] . "\n";
+                echo "Name: " . $hit['_source']['name'] . "\n";
+                echo "Description: " . $hit['_source']['description'] . "\n";
+                echo "Image: " . $hit['_source']['image'] . "\n";
+                echo "Image Text: " . $hit['_source']['image_text'] . "\n";
+                echo "-------------------\n";
+            }
+        } catch (\Exception $e) {
+            echo "Error retrieving indexed products: " . $e->getMessage();
+        }
+    }
+
   
 }

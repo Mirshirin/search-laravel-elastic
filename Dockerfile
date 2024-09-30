@@ -10,7 +10,9 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     curl \
     nodejs \
-    npm
+    npm \
+    cron \
+    supervisor
 
 # Install PHP extensions
 RUN docker-php-ext-install \
@@ -24,63 +26,55 @@ RUN docker-php-ext-install \
 
 # Install Redis PHP extension
 RUN pecl install redis && docker-php-ext-enable redis
-# Copy composer executable.
+
+
+
+# Copy composer executable
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-
 # نصب Node.js و npm
-
 RUN apt-get update && apt-get install -y curl
 RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
-    RUN apt-get install -y nodejs
-  
+RUN apt-get install -y nodejs
 
-
-# Set working directory to /var/www.
+# Set working directory to /var/www
 WORKDIR /var/www
-# نصب وابستگی‌های پروژه از composer.json
+
+# کپی فایل‌های پروژه Laravel به داخل کانتینر
 COPY ./src /var/www/html/
-# نصب Laravel CLI
 
-
-# نصب پکیج Elasticsearch
+# نصب پکیج‌های Composer
 WORKDIR /var/www/html
-
-
-
-COPY ./src/composer.json ./src/composer.lock ./
-COPY ./src/package.json ./src/package-lock.json ./
-
-
-#RUN composer global require laravel/installer
 RUN composer install --no-scripts --no-autoloader
 
-RUN composer require elasticsearch/elasticsearch
-RUN composer require thiagoalessio/tesseract_ocr
-RUN composer dump-autoload
-RUN php artisan key:generate
-# Copy files from current folder to container current folder (set in workdir).
+# نصب پکیج Elasticsearch و Tesseract OCR
+#RUN composer require elasticsearch/elasticsearch
+#RUN composer require thiagoalessio/tesseract_ocr
+
+# اجرای دستور dump-autoload برای بروزرسانی Autoload
+#RUN composer dump-autoload
+
+# کپی دوباره فایل‌ها (در صورتی که نیاز است)
 COPY --chown=www-data:www-data . .
 
-# Create laravel caching folders.
+# تنظیم کلید اپلیکیشن Laravel
+#RUN php artisan key:generate
+
+# Create laravel caching folders
 RUN mkdir -p /var/www/storage/framework/{cache,sessions,testing,views}
 
-
-# Fix files ownership.
+# Fix files ownership
 RUN chown -R www-data /var/www/storage
 RUN chown -R www-data /var/www/storage/framework
-#RUN chown -R www-data /var/www/storage/framework/sessions
-
 
 # Adjust user permission & group
 RUN usermod --uid 1000 www-data
 RUN groupmod --gid 1001 www-data
-RUN apt-get update && apt-get install -y nodejs npm
 
+# نصب پکیج‌های npm
 RUN npm install
-#RUN docker-php-ext-install redis
-
-
-# RUN chmod +x /usr/local/bin/entrypoint.sh
-
-# ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+RUN mkdir -p /etc/supervisor/conf.d
+# کپی کردن فایل تنظیمات supervisor به کانتینر
+#Copy ./src/laravel-worker.conf /etc/supervisor/conf.d/
+#COPY ./etc/supervisor/conf.d/laravel-worker.conf /etc/supervisor/conf.d/
+COPY ./src/laravel-worker.conf /etc/supervisor/conf.d/

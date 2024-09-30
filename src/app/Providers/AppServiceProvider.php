@@ -23,8 +23,6 @@ class AppServiceProvider extends ServiceProvider
                   ->build();
                 return new ElasticsearchService($client);
             });
-        
-    
     }
 
     /**
@@ -32,6 +30,35 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        
+        $elasticsearchService = $this->app->make(ElasticsearchService::class);
+
+        // ساخت ایندکس products در صورت عدم وجود
+        $elasticsearchService->createIndexIfNotExists('products', [
+            // تنظیمات ایندکس
+            'number_of_shards' => 1,
+            'number_of_replicas' => 1,
+        ], [
+            // مپینگ‌های ایندکس
+            'properties' => [
+                'name' => [
+                    'type' => 'text',
+                ],
+                'description' => [
+                    'type' => 'text',
+                ],                
+                'price' => [
+                    'type' => 'float',
+                ],
+                'image' => [
+                    'type' => 'text',
+                ],
+                'image_text' => [
+                    'type' => 'text',
+                ],
+               
+            ],
+        ]);
     }
+    
 }

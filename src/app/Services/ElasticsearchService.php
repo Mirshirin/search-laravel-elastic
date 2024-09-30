@@ -15,24 +15,45 @@ class ElasticsearchService
 
     public function __construct()
     {
-        $this->client = ClientBuilder::create()->setHosts([env('ELASTICSEARCH_HOST', 'localhost:9200')])->build();
+        $this->client = ClientBuilder::create()->setHosts([env('ELASTICSEARCH_HOST', 'elasticsearch:9200')])->build();
     }
-
+    public function createIndexIfNotExists($indexName, $settings = [], $mappings = [])
+    {
+        $response = $this->client->ping();
+            if ($response) {
+                return 'Elasticsearch is running!';
+            } else {
+                return 'Cannot connect to Elasticsearch!';
+            }
+        // بررسی وجود ایندکس
+        if (!$this->client->indices()->exists(['index' => $indexName])) {
+            // ساختن ایندکس
+            $params = [
+                'index' => $indexName,
+                'body' => [
+                    'settings' => $settings,
+                    'mappings' => $mappings,
+                ],
+            ];
+            $this->client->indices()->create($params);
+        }
+    }
+    
     public function indexProduct(Product $product)
     {
         Log::info('Attempting to index product: ' . $product->id);
         Log::info('Attempting to index product name: ' . $product->name);
+        $imageText = pathinfo($product->image, PATHINFO_FILENAME); // تبدیل نام فایل تصویر به متن
 
         $params = [
             'index' => 'products',
             'id'    => $product->id,
-
             'body'  => [
                 'name'        => $product->name,
                 'description' => $product->description,
                 'price'       => $product->price,
                 'image'       => $product->image,
-                'image_text'  => $product->image_text,
+                'image_text'  =>  $imageText ,
             ]
         ];
         try {
@@ -57,17 +78,12 @@ class ElasticsearchService
     
         $product->update($validatedData);
     
-        if (request()->hasFile('image')) {
-            $imagePath = request()->file('image')->store('images');
-            $product->image_path = $imagePath;
-    
-          
-        }
-    
-        $product->save();
+     
          
         // ذخیره محصول در Elasticsearch
-        $this->indexProduct($product);
+        app(ElasticSearchService::class)->indexProduct($product);
+    
+
           
         return redirect()->back()->with('success', 'Product created successfully.');
     
@@ -88,5 +104,6 @@ class ElasticsearchService
             throw $e;
         }
     }
+   
 
 }
