@@ -22,7 +22,8 @@ http://localhost:8090/api/products
   }
 ]
 =============================================
-. Add a New Product
+### 2. Add a New Product
+
     • Method: POST
     • URL: http://localhost:8090/api/products
     • Request Body:
@@ -41,7 +42,7 @@ Response:
   "image": 1.jpg
 }
 ============================================
-. Update a Product
+### 3. Update a Product
     • Method: PUT
     • URL: http://127.0.0.1:8090/api/products/26 or {id}
     • Request Body:
@@ -61,7 +62,7 @@ Response:
   "image": "3.jpg"
 }
 ===========================================
-Delete a Product
+### 4.Delete a Product
     • Method: DELETE
     • URL: http://localhost:8090/api/products/26 or {id}
     • Response:
@@ -70,7 +71,7 @@ json
   "message": "Product deleted successfully."
 }
 ===========================================
-. Search Products (Elasticsearch)
+### 4. Search Products (Elasticsearch)
     • Method: GET
     • URL:http://localhost:8090/api/search?search=perferendis&page=1
     • Response:
@@ -99,10 +100,11 @@ json
    cd yourproject
 
 2.Build and start the containers:
-docker-compose up –d
-3.does not to Run migrations and seed the database, it has done in file docker-entrypoint.sh
+docker-compose up –d --build
+
+3.The script does not run migrations and seed the database; these tasks are handled in the docker-entrypoint.sh file.
 docker exec -it laravel-app bash
-php artisan migrate –seed
+
 4-:Access the application:
     • Laravel App: http://localhost:8090
     • API Endpoints: http://localhost:8090/api/products
