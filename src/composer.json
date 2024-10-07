@@ -8,6 +8,7 @@
         "php": "^8.2",
         "elasticsearch/elasticsearch": "*",
         "laravel/framework": "^11.9",
+        "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "predis/predis": "^2.2",
         "thiagoalessio/tesseract_ocr": "^2.13"

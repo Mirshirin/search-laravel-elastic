@@ -32,9 +32,13 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
 
-            Route::prefix('api')
-                ->middleware('api')
-                ->group(base_path('routes/api.php'));
+           // API routes
+           Route::prefix('api')
+           ->middleware('api')
+           ->namespace($this->namespace)
+           ->group(base_path('routes/api.php'));
+   
+
         });
     }
 
@@ -48,5 +52,22 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by(optional($request->user())->id ?: $request->ip());
         });
+    }
+
+        public function map()
+    {
+        $this->mapApiRoutes();
+
+        $this->mapWebRoutes();
+
+        // می‌توانید مسیرهای دیگری را هم در اینجا اضافه کنید
+    }
+
+    protected function mapApiRoutes()
+    {
+        Route::middleware('api')
+            ->prefix('api')
+            ->namespace($this->namespace)
+            ->group(base_path('routes/api.php'));
     }
 }

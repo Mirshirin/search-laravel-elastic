@@ -18,96 +18,59 @@ use App\Contracts\ProductRepositoryInterface;
 
 class ProductController extends Controller
 { 
-    protected $productRepository;  
+    protected $productRepository; 
+    protected $productsService;
+ 
     public function __construct(ProductRepositoryInterface $productRepository,ProductsService $productsService)
     {
         $this->productRepository = $productRepository;    
         $this->productsService = $productsService; 
 
-
-    }
-
-    public function show()
-    {
-        $products = Product::all();
-        return view('product.index', ['products' => $products]);        
-    }
-
+    }   
     public function index(Request $request)
     {
+        $searchProduct= new ElasticsearchService();
         $query = $request->input('search');
-         //dd($query)   ; 
-        $page =  $request->input('page',1);
-        $size=10;
-        $from=($page -1 ) * $size;
-        $totalResults = 0;
-        $products = collect(); // مقدار پیش‌فرض برای محصولات
-        if (empty($query)) {
-            $products = Product::all();
-        }else {
-            $client = ClientBuilder::create()->setHosts([env('ELASTICSEARCH_HOST', 'localhost:9200')])->build();
-              
-                    try {
-                        $response = $client->ping();
-                        if ($response) {
-                            echo "Connected to Elasticsearch successfully.";
-                        }
-                    } catch (\Exception $e) {
-                        echo "Failed to connect to Elasticsearch: " . $e->getMessage();
-                    }
-            
-            $params = [
-                'index' => 'products',
-                'body'  => [
-                    'query' => [
-                        'multi_match' => [
-                            'query'  => $query,
-                            'fields' => ['name', 'description','image_text'] 
-                                ]
-                            ],
-                            'size' => $size,
-                            'from' => $from
+        $page = $request->input('page', 1);
+        $size = 10;
 
-                        ]
-                    ];
+        $searchResult = $searchProduct->searchProducts($query, $page, $size);
+
+        return view('product.search', [
+            'products' => $searchResult['products'],
+            'currentPage' => $page,
+            'totalResults' => $searchResult['totalResults'],
+            'size' => $size
+        ]);
+    } 
     
-                    $results = $client->search($params);  
-                   
-              //dd($results)   ;  
-            $products = collect($results['hits']['hits'])->map(function ($hit) {
-                return array_merge($hit['_source'], ['id' => $hit['_id']]);
-            });
-           
-            $totalResults = $results['hits']['total']['value'];
-           // $totalResults = $results['hits']['total']['value'];
-            
-        } 
-     
-            return view('product.search', [
-                'products' => $products,
-                'currentPage' => $page,
-                'totalResults' => $totalResults , // مقدار پیش‌فرض برای تعداد نتایج
-                'size' => $size
-            ]);
-       
-    }
     public function reindex() {
    
-      // $elasticsearchService = app(ElasticsearchService::class);
-       ReindexProductsJob::dispatch();
-
+        ReindexProductsJob::dispatch();
         return response()->json(['message' => 'Reindexing started.'], 200);
      }
-     protected $productsService;
+
+     public function insert(Request $request)
+     {  
+         dd($request->all());
+         $product=new Product();
+         $product->name=$request->name;
+         $product->description=$request->description;
+         $product->price=$request->price;
+         $product->image=$request->image;
+         if ($product->save())
+         return ['status' => 'product.edit-product'];
+     }
 
      public function create()
-     {        
+     {              
          return view('product.create-product');
      }
     public function store(Request $request)
     {  
        $product = $this->productsService->create($request->all());
-        return response()->json(['message' => 'Product added successfully.', 'product' => $product]);
+
+       return response()->json(['message' => 'Product added successfully.', 'product' => $product]);
     }
     public function edit($id)
     {
@@ -143,6 +106,7 @@ class ProductController extends Controller
             return response()->json(['status' => 'Error deleting data.', 'error' => $e->getMessage()], 500);
         }   
     }
+
     public function getIndexedProducts()    
     {
         $client = ClientBuilder::create()->setHosts([env('ELASTICSEARCH_HOST', 'localhost:9200')])->build();

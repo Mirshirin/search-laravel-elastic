@@ -10,7 +10,7 @@ use App\Services\ElasticsearchService;
 class Product extends Model
 {
     use HasFactory;
-
+    public $timestamps=true;
     protected $fillable = ['name', 'description', 'price','image'];
     protected $hidden = [
         'created_at',
@@ -24,6 +24,9 @@ class Product extends Model
 
       
         self::created(function ($product) {        
+            app(ElasticSearchService::class)->indexProduct($product);
+        });
+        self::updated(function ($product) {        
             app(ElasticSearchService::class)->indexProduct($product);
         });
         // هنگامی که یک محصول حذف می‌شود، از ایندکس حذف کنید
