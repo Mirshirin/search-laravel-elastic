@@ -75,6 +75,5 @@ RUN groupmod --gid 1001 www-data
 RUN npm install
 RUN mkdir -p /etc/supervisor/conf.d
 # کپی کردن فایل تنظیمات supervisor به کانتینر
-#Copy ./src/laravel-worker.conf /etc/supervisor/conf.d/
-#COPY ./etc/supervisor/conf.d/laravel-worker.conf /etc/supervisor/conf.d/
+
 COPY ./src/laravel-worker.conf /etc/supervisor/conf.d/
