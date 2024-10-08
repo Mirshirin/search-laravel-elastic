@@ -98,14 +98,15 @@ json
    ```bash
    git clone https://github.com/Mirshirin/search-laravel-elastic.git
    cd yourproject
-
-2.Build and start the containers:
+2-rename .env.example  .env
+3.Build and start the containers:
 docker-compose up –d --build
 
-3.The script does not run migrations and seed the database; these tasks are handled in the docker-entrypoint.sh file.
+4.The script does not run migrations and seed the database; these tasks are handled in the docker-entrypoint.sh file.
 docker exec -it laravel-app bash
 
-4-:Access the application:
+
+5-Access the application:
     • Laravel App: http://localhost:8090
     • API Endpoints: http://localhost:8090/api/products
     • Web Endpoints: http://localhost:8090/products
