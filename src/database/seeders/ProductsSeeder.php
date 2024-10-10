@@ -21,7 +21,7 @@ class ProductsSeeder extends Seeder
             ]);
         }
 
-        $this->command->info('Generated 20000 products.');
+        $this->command->info('Generated 200 products.');
     }
 
     private function generateRandomImageName( $faker)
