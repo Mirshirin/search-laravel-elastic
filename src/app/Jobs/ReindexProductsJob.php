@@ -16,12 +16,7 @@ class ReindexProductsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, SerializesModels;
 
-    private $elasticsearchService;
-
-    // public function __construct()
-    // {
-    //     $this->elasticsearchService = app(ElasticsearchService::class);
-    // }
+    private $elasticsearchService;    
 
     public function handle()
     {

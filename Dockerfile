@@ -12,7 +12,8 @@ RUN apt-get update && apt-get install -y \
     nodejs \
     npm \
     cron \
-    supervisor
+    supervisor \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
 RUN docker-php-ext-install \
@@ -63,6 +64,7 @@ COPY --chown=www-data:www-data . .
 # Create laravel caching folders
 RUN mkdir -p /var/www/storage/framework/{cache,sessions,testing,views}
 
+
 # Fix files ownership
 RUN chown -R www-data /var/www/storage
 RUN chown -R www-data /var/www/storage/framework
@@ -77,3 +79,9 @@ RUN mkdir -p /etc/supervisor/conf.d
 # کپی کردن فایل تنظیمات supervisor به کانتینر
 
 COPY ./src/laravel-worker.conf /etc/supervisor/conf.d/
+COPY ./src/laravel-scheduler.conf /etc/supervisor/conf.d/
+COPY ./src/supervisord.conf /etc/supervisor/supervisord.conf
+
+# ایجاد دایرکتوری برای لاگ‌ها
+RUN mkdir -p /var/log/supervisor
+

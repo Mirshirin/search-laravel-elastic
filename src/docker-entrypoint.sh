@@ -16,15 +16,7 @@ npm install
 npm run dev &
 
 
-# اضافه کردن cron job
-echo "* * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1" | crontab -
+# Start php-fpm as a background process
+php-fpm &
 
-# راه‌اندازی cron
-cron
-
-
-# راه‌اندازی supervisor برای مدیریت queue
-supervisord -c /etc/supervisor/supervisord.conf
-
-# راه‌اندازی PHP-FPM
-exec php-fpm
+exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf

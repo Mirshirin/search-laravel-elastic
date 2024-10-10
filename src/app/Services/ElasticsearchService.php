@@ -3,11 +3,7 @@ namespace App\Services;
 
 
 use App\Models\Product;
-
-use Illuminate\Http\Request;
-use App\Jobs\ReindexProductsJob;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Elastic\Elasticsearch\ClientBuilder;
 
 class ElasticsearchService
@@ -18,6 +14,7 @@ class ElasticsearchService
     {
         $this->client = ClientBuilder::create()->setHosts([env('ELASTICSEARCH_HOST', 'elasticsearch:9200')])->build();
     }
+
     public function createIndexIfNotExists($indexName, $settings = [], $mappings = [])
     {
         $response = $this->client->ping();
@@ -72,31 +69,8 @@ class ElasticsearchService
             throw $e;
         }
     }
-    public function updateProduct(Product $product)
-    {
-        Log::info("Updating product: ");
-        Log::info('Product update process started for product id: ' . $product->id);
 
-        $validatedData = request()->validate([
-            'name' => 'required',
-            'description' => 'required',
-            'price' => 'required|numeric',
-            'image' => 'nullable|image|mimes:jpg,png,jpeg,gif|max:2048',
-        ]);
     
-        $product->update($validatedData);
-    
-        Log::info('Starting Elasticsearch reindexing for product id: ' . $product->id);
-
-         
-        // ذخیره محصول در Elasticsearch
-        app(ElasticSearchService::class)->indexProduct($product);
-    
-
-          
-        return redirect()->back()->with('success', 'Product created successfully.');
-    
-    }
     public function deleteProduct(Product $product)
     {
         Log::info('Deleting product from index: ' . $product->id);
@@ -118,6 +92,7 @@ class ElasticsearchService
             throw $e;
         }
     }
+
     public function searchProducts($query, $page = 1, $size = 10)
     {
         $from = ($page - 1) * $size;
@@ -128,8 +103,7 @@ class ElasticsearchService
             $products = Product::all();
             $totalResults = $products->count();
         } else {
-            $client = ClientBuilder::create()->setHosts([env('ELASTICSEARCH_HOST', 'localhost:9200')])->build();
-            
+            $client = ClientBuilder::create()->setHosts([env('ELASTICSEARCH_HOST', 'localhost:9200')])->build();            
             try {
                 $response = $client->ping();
                 if ($response) {

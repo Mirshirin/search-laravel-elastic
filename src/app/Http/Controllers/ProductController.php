@@ -44,34 +44,24 @@ class ProductController extends Controller
         ]);
     } 
     
-    public function reindex() {
-   
+    public function reindex() 
+    {   
         ReindexProductsJob::dispatch();
         return response()->json(['message' => 'Reindexing started.'], 200);
-     }
+    }   
 
-     public function insert(Request $request)
-     {  
-         dd($request->all());
-         $product=new Product();
-         $product->name=$request->name;
-         $product->description=$request->description;
-         $product->price=$request->price;
-         $product->image=$request->image;
-         if ($product->save())
-         return ['status' => 'product.edit-product'];
-     }
+    public function create()
+    {              
+        return view('product.create-product');
+    }
 
-     public function create()
-     {              
-         return view('product.create-product');
-     }
     public function store(Request $request)
     {  
        $product = $this->productsService->create($request->all());
 
        return response()->json(['message' => 'Product added successfully.', 'product' => $product]);
     }
+
     public function edit($id)
     {
         $product = $this->productRepository->getProductById($id);
@@ -90,6 +80,7 @@ class ProductController extends Controller
             $product = app(ProductRepositoryInterface::class)->update($id, $request->all(), $image);    
             return redirect(route('products.index'));
     }
+
     public function destroy($id)
     {       
         try {

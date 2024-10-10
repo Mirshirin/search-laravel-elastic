@@ -7,7 +7,7 @@
       <div class="col-md-10 offset-1 mt-5">
              <h2 class="text-center">**********Search Data in Laravel 11 full text**************</h2>
              <div class="search-container">
-             <form action="{{ route('product.index') }}" method="get" >
+             <form action="{{ route('products.index') }}" method="get" >
               <input type="text" name="search" class="form-control" id="search-input" placeholder="Search...">
 
               <ul id="suggestion-list"></ul>
