@@ -111,3 +111,4 @@ docker exec -it laravel-app bash
     • API Endpoints: http://localhost:8090/api/products
     • Web Endpoints: http://localhost:8090/products
    
+# list-customer
